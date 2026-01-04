@@ -3,6 +3,9 @@
 Client (library) implementation of MRIM (Mail.Ru Agent Instant Messaing) protocol using Qt.
 
 
+(WIP)
+
+
 ## Dependencies
 
 - Qt6 (Core, Network, Core5Compat)
