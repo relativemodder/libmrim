@@ -16,7 +16,6 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Network Core5Compat)
 add_library(mrim SHARED
   libmrim_global.h
 
-
   redirector.h redirector.cpp
   mrimclient.h mrimclient.cpp
   mrimmessage.h mrimmessage.cpp
