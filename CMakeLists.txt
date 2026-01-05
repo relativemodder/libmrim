@@ -19,6 +19,9 @@ add_library(mrim SHARED
   redirector.h redirector.cpp
   mrimclient.h mrimclient.cpp
   mrimmessage.h mrimmessage.cpp
+  mrimconnection.h mrimconnection.cpp
+  messagehandler.h messagehandler.cpp
+  mrimprotocol.h mrimprotocol.cpp
 )
 
 target_link_libraries(mrim
