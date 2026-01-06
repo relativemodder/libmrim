@@ -7,7 +7,7 @@
 #include <memory>
 #include <map>
 #include <QByteArray>
-#include "mrimmessage.h"
+#include "mrim/mrimmessage.h"
 
 class MrimProtocol;
 

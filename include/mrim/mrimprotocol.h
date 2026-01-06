@@ -6,8 +6,8 @@
 
 #include <QObject>
 #include <QTimer>
-#include "mrimconnection.h"
-#include "messagehandler.h"
+#include "mrim/mrimconnection.h"
+#include "mrim/messagehandler.h"
 
 namespace MRIM {
 

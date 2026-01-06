@@ -18,10 +18,10 @@ find_package(Python3 COMPONENTS Interpreter)
 if (Python3_FOUND)
   add_custom_command(
     OUTPUT
-    ${CMAKE_CURRENT_SOURCE_DIR}/mrimprotocol.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mrimprotocol.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/messagehandler.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/messagehandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/mrim/mrimprotocol.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/mrimprotocol.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/mrim/messagehandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/messagehandler.cpp
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/codegen.py ${CMAKE_CURRENT_SOURCE_DIR}/protocol.xml
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/protocol.xml ${CMAKE_CURRENT_SOURCE_DIR}/tools/codegen.py
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -30,24 +30,24 @@ if (Python3_FOUND)
 
   add_custom_target(mrimcodegen
     DEPENDS
-      ${CMAKE_CURRENT_SOURCE_DIR}/mrimprotocol.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/mrimprotocol.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/messagehandler.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/messagehandler.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/mrim/mrimprotocol.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/mrimprotocol.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/mrim/messagehandler.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/messagehandler.cpp
   )
 else()
   message(WARNING "Python3 not found. Code generation will not be available. Please run codegen.py manually.")
 endif()
 
 add_library(mrim SHARED
-  libmrim_global.h
+  include/mrim/libmrim_global.h
 
-  redirector.h redirector.cpp
-  mrimclient.h mrimclient.cpp
-  mrimmessage.h mrimmessage.cpp
-  mrimconnection.h mrimconnection.cpp
-  messagehandler.h messagehandler.cpp
-  mrimprotocol.h mrimprotocol.cpp
+  include/mrim/redirector.h src/redirector.cpp
+  include/mrim/mrimclient.h src/mrimclient.cpp
+  include/mrim/mrimmessage.h src/mrimmessage.cpp
+  include/mrim/mrimconnection.h src/mrimconnection.cpp
+  include/mrim/messagehandler.h src/messagehandler.cpp
+  include/mrim/mrimprotocol.h src/mrimprotocol.cpp
 )
 
 if(Python3_FOUND)
@@ -59,5 +59,7 @@ target_link_libraries(mrim
   Qt${QT_VERSION_MAJOR}::Network
   Qt${QT_VERSION_MAJOR}::Core5Compat
 )
+
+target_include_directories(mrim PUBLIC include)
 
 target_compile_definitions(mrim PRIVATE LIBMRIM_LIBRARY)

@@ -1,4 +1,4 @@
-#include "mrimmessage.h"
+#include "mrim/mrimmessage.h"
 #include <QTextCodec>
 #include <QStringEncoder>
 #include <QStringDecoder>

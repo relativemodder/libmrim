@@ -1,8 +1,8 @@
 // Auto-generated file. Do not edit manually!
 // Generated from protocol.xml
 
-#include "messagehandler.h"
-#include "mrimprotocol.h"
+#include "mrim/messagehandler.h"
+#include "mrim/mrimprotocol.h"
 
 // Auto-generated handler implementations
 

@@ -1,4 +1,4 @@
-#include "redirector.h"
+#include "mrim/redirector.h"
 #include <QTcpSocket>
 #include <QDebug>
 

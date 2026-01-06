@@ -1,8 +1,8 @@
 // Auto-generated file. Do not edit manually!
 // Generated from protocol.xml
 
-#include "mrimprotocol.h"
-#include "mrimmessage.h"
+#include "mrim/mrimprotocol.h"
+#include "mrim/mrimmessage.h"
 #include <QDebug>
 
 MrimProtocol::MrimProtocol(MrimConnection *connection, QObject *parent)

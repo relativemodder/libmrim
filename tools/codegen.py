@@ -41,8 +41,8 @@ class MrimCodegen:
 
 #include <QObject>
 #include <QTimer>
-#include "mrimconnection.h"
-#include "messagehandler.h"
+#include "mrim/mrimconnection.h"
+#include "mrim/messagehandler.h"
 
 namespace MRIM {
 
@@ -149,8 +149,8 @@ private:
         code = '''// Auto-generated file. Do not edit manually!
 // Generated from protocol.xml
 
-#include "mrimprotocol.h"
-#include "mrimmessage.h"
+#include "mrim/mrimprotocol.h"
+#include "mrim/mrimmessage.h"
 #include <QDebug>
 
 MrimProtocol::MrimProtocol(MrimConnection *connection, QObject *parent)
@@ -319,7 +319,7 @@ void MrimProtocol::onPingTimeout()
 #include <memory>
 #include <map>
 #include <QByteArray>
-#include "mrimmessage.h"
+#include "mrim/mrimmessage.h"
 
 class MrimProtocol;
 
@@ -367,8 +367,8 @@ private:
         code = '''// Auto-generated file. Do not edit manually!
 // Generated from protocol.xml
 
-#include "messagehandler.h"
-#include "mrimprotocol.h"
+#include "mrim/messagehandler.h"
+#include "mrim/mrimprotocol.h"
 
 // Auto-generated handler implementations
 
@@ -451,10 +451,10 @@ def main():
         
         # Generate files
         files = {
-            'mrimprotocol.h': gen.generate_protocol_h(),
-            'mrimprotocol.cpp': gen.generate_protocol_cpp(),
-            'messagehandler.h': gen.generate_messagehandler_h(),
-            'messagehandler.cpp': gen.generate_messagehandler_cpp(),
+            'include/mrim/mrimprotocol.h': gen.generate_protocol_h(),
+            'src/mrimprotocol.cpp': gen.generate_protocol_cpp(),
+            'include/mrim/messagehandler.h': gen.generate_messagehandler_h(),
+            'src/messagehandler.cpp': gen.generate_messagehandler_cpp(),
         }
         
         for filename, content in files.items():

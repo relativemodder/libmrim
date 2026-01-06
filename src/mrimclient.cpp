@@ -1,4 +1,4 @@
-#include "mrimclient.h"
+#include "mrim/mrimclient.h"
 
 MrimClient::MrimClient(QObject *parent)
     : QObject(parent)

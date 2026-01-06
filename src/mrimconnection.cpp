@@ -1,4 +1,4 @@
-#include "mrimconnection.h"
+#include "mrim/mrimconnection.h"
 
 MrimConnection::MrimConnection(QObject *parent)
     : QObject{parent}
