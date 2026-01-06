@@ -34,15 +34,14 @@ add_subdirectory(/path/to/libmrim libmrim)
 
 ...
 
-target_include_directories(testclient PUBLIC /path/to/libmrim)
+target_include_directories(testclient PUBLIC /path/to/libmrim/include)
 ```
 
 ### Test client
 ```cpp
 #include <QCoreApplication>
 #include <QDebug>
-#include <mrimmessage.h>
-#include <mrimclient.h>
+#include <mrim/mrimclient.h>
 
 int main(int argc, char *argv[])
 {
