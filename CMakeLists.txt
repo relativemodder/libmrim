@@ -13,6 +13,32 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Network Core5Compat)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Network Core5Compat)
 
+find_package(Python3 COMPONENTS Interpreter)
+
+if (Python3_FOUND)
+  add_custom_command(
+    OUTPUT
+    ${CMAKE_CURRENT_SOURCE_DIR}/mrimprotocol.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mrimprotocol.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/messagehandler.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/messagehandler.cpp
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/codegen.py ${CMAKE_CURRENT_SOURCE_DIR}/protocol.xml
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/protocol.xml ${CMAKE_CURRENT_SOURCE_DIR}/tools/codegen.py
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Generating MRIM protocol code from protocol.xml"
+  )
+
+  add_custom_target(mrimcodegen
+    DEPENDS
+      ${CMAKE_CURRENT_SOURCE_DIR}/mrimprotocol.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/mrimprotocol.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/messagehandler.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/messagehandler.cpp
+  )
+else()
+  message(WARNING "Python3 not found. Code generation will not be available. Please run codegen.py manually.")
+endif()
+
 add_library(mrim SHARED
   libmrim_global.h
 
@@ -23,6 +49,10 @@ add_library(mrim SHARED
   messagehandler.h messagehandler.cpp
   mrimprotocol.h mrimprotocol.cpp
 )
+
+if(Python3_FOUND)
+    add_dependencies(mrim mrimcodegen)
+endif()
 
 target_link_libraries(mrim
   Qt${QT_VERSION_MAJOR}::Core

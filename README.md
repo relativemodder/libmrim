@@ -10,17 +10,22 @@ Client (library) implementation of MRIM (Mail.Ru Agent Instant Messaing) protoco
 
 - Qt6 (Core, Network, Core5Compat)
 - C++17-able compiler (e.g. anything these days)
+- Python 3 (to generate code from XML protocol definition)
 
 
 ## Building
 
 ```bash
 git clone https://github.com/relativemodder/libmrim
-cd libmrim && mkdir build && cd build
+cd libmrim
+
+python3 tools/codegen.py protocol.xml
+
+mkdir build && cd build
 cmake .. && cmake --build .
 ```
 
-## How to use `libmrim` in other CMake projects
+## How to use `libmrim` in other Qt C++ projects
 
 ### CMake usage
 
@@ -64,4 +69,26 @@ int main(int argc, char *argv[])
     return a.exec();
 }
 
+```
+
+
+## Adding new stuff
+
+```xml
+<!-- Add a new command -->
+<command name="CS_NEW_COMMAND" value="0x2000" direction="client_to_server"/>
+
+<!-- Add handler for the inbound command -->
+<handler command="CS_NEW_RESPONSE" callback="onNewResponse">
+    <field name="data" type="UINT32"/>
+    <signal name="newResponseReceived">
+        <param name="data" type="quint32"/>
+    </signal>
+</handler>
+
+<!-- Add a method to send it -->
+<method name="sendNewCommand" command="CS_NEW_COMMAND">
+    <param name="value" type="quint32"/>
+    <field name="value" type="UINT32" source="value"/>
+</method>
 ```

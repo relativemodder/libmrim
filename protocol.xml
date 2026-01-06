@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="MRIM" version="1.0">
+    <!-- Commands enum -->
+    <commands>
+        <command name="CS_HELLO" value="0x1001" direction="client_to_server"/>
+        <command name="CS_HELLO_ACK" value="0x1002" direction="server_to_client"/>
+        <command name="CS_LOGIN2" value="0x1038" direction="client_to_server"/>
+        <command name="CS_LOGIN_ACK" value="0x1004" direction="server_to_client"/>
+        <command name="CS_LOGIN_REJ" value="0x1005" direction="server_to_client"/>
+        <command name="CS_PING" value="0x1006" direction="client_to_server"/>
+        <command name="CS_MESSAGE" value="0x1008" direction="client_to_server"/>
+        <command name="CS_MESSAGE_ACK" value="0x1009" direction="server_to_client"/>
+        <command name="CS_MESSAGE_STATUS" value="0x1012" direction="server_to_client"/>
+        <command name="CS_LOGOUT" value="0x1013" direction="server_to_client"/>
+        <command name="CS_USER_INFO" value="0x1015" direction="server_to_client"/>
+    </commands>
+
+    <!-- Enums -->
+    <enums>
+        <enum name="Status">
+            <value name="STATUS_OFFLINE" val="0x00000000"/>
+            <value name="STATUS_ONLINE" val="0x00000001"/>
+            <value name="STATUS_AWAY" val="0x00000002"/>
+        </enum>
+        <enum name="MessageStatus">
+            <value name="DELIVERED" val="0x0000"/>
+            <value name="USER_DOESNT_EXIST" val="0x8001"/>
+            <value name="INTERNAL_SERVER_ERROR" val="0x8003"/>
+        </enum>
+    </enums>
+
+    <!-- Message handlers for incoming packets -->
+    <handlers>
+        <handler command="CS_HELLO_ACK" callback="onHelloAck">
+            <field name="pingInterval" type="UINT32"/>
+            <signal name="helloAckReceived">
+                <param name="pingInterval" type="quint32"/>
+            </signal>
+        </handler>
+
+        <handler command="CS_LOGIN_ACK" callback="onLoginAck">
+            <signal name="loginSuccessful"/>
+        </handler>
+
+        <handler command="CS_LOGIN_REJ" callback="onLoginRej">
+            <field name="reason" type="UBIART_LIKE_STRING"/>
+            <signal name="loginRejected">
+                <param name="reason" type="QString"/>
+            </signal>
+        </handler>
+
+        <handler command="CS_USER_INFO" callback="onUserInfo">
+            <field name="key1" type="UBIART_LIKE_STRING"/>
+            <field name="nickname" type="UNICODE_STRING" utf16="true"/>
+            <field name="key2" type="UBIART_LIKE_STRING"/>
+            <field name="totalMessages" type="UNICODE_STRING" utf16="true"/>
+            <field name="key3" type="UBIART_LIKE_STRING"/>
+            <field name="unreadMessages" type="UNICODE_STRING" utf16="true"/>
+            <field name="key4" type="UBIART_LIKE_STRING"/>
+            <field name="endpoint" type="UNICODE_STRING" utf16="true"/>
+            <signal name="userInfoReceived">
+                <param name="info" type="QMap&lt;QString, QVariant&gt;"/>
+            </signal>
+        </handler>
+
+        <handler command="CS_MESSAGE_STATUS" callback="onMessageStatus">
+            <field name="status" type="UINT32"/>
+            <signal name="messageStatusReceived">
+                <param name="status" type="MRIM::MessageStatus"/>
+            </signal>
+        </handler>
+    </handlers>
+
+    <!-- Client send methods for outgoing packets -->
+    <client_methods>
+        <method name="sendHello" command="CS_HELLO"/>
+        
+        <method name="sendLogin" command="CS_LOGIN2">
+            <param name="username" type="QString"/>
+            <param name="password" type="QString"/>
+            <param name="status" type="quint32"/>
+            <field name="login" type="UBIART_LIKE_STRING" source="username"/>
+            <field name="password" type="UBIART_LIKE_STRING" source="password"/>
+            <field name="status" type="UINT32" source="status"/>
+            <field name="userAgent" type="UBIART_LIKE_STRING" value='"Qt MRIM Client v" MRIM_LIB_VERSION'/>
+        </method>
+
+        <method name="sendMessage" command="CS_MESSAGE">
+            <param name="to" type="QString"/>
+            <param name="message" type="QString"/>
+            <field name="flags" type="UINT32" value="0x0"/>
+            <field name="to" type="UBIART_LIKE_STRING" source="to"/>
+            <field name="message" type="UNICODE_STRING" source="message" utf16="true"/>
+            <field name="rtfMessage" type="UBIART_LIKE_STRING" value='""'/>
+        </method>
+
+        <method name="sendPing" command="CS_PING"/>
+    </client_methods>
+</protocol>

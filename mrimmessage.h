@@ -2,13 +2,13 @@
 #define MRIMMESSAGE_H
 
 #include <QObject>
-#include <QByteArray>
 #include <QDataStream>
 #include <QMap>
 #include <QVariant>
+#include <QList>
 #include <functional>
 
-#define BSWAP_16(x) ((((x)  & 0xFF) << 8) | ((x) >> 8))
+#define BSWAP_16(x) ((((x) & 0xFF) << 8) | ((x) >> 8))
 
 enum FieldDataType {
     MRIM_FD_BYTE = 1,
@@ -29,7 +29,6 @@ struct MessageField {
     QVariant constantValue;
     int subbufferSize;
     int maxSize;
-
     std::function<void(QDataStream&, const QVariant&)> customWriter;
     std::function<QVariant(QDataStream&)> customReader;
 
@@ -43,7 +42,6 @@ struct MessageField {
 class MrimMessage : public QObject
 {
     Q_OBJECT
-
 public:
     explicit MrimMessage(QObject *parent = nullptr);
 
@@ -70,9 +68,15 @@ private:
 
     QByteArray convertToCP1251(const QString& str);
     QString convertFromCP1251(const QByteArray& data);
-
     QByteArray convertToUTF16LE(const QString& str);
     QString convertFromUTF16LE(const QByteArray& data);
+
+    // Simplified read/write using function pointers
+    using WriterFunc = std::function<void(QDataStream&, const QVariant&)>;
+    using ReaderFunc = std::function<QVariant(QDataStream&, bool)>;
+
+    WriterFunc getWriter(FieldDataType type);
+    ReaderFunc getReader(FieldDataType type);
 };
 
 #endif // MRIMMESSAGE_H

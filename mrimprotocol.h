@@ -1,3 +1,6 @@
+// Auto-generated file. Do not edit manually!
+// Generated from protocol.xml
+
 #ifndef MRIMPROTOCOL_H
 #define MRIMPROTOCOL_H
 
@@ -7,6 +10,8 @@
 #include "messagehandler.h"
 
 namespace MRIM {
+
+// Auto-generated commands enum
 enum Command {
     CS_HELLO = 0x1001,
     CS_HELLO_ACK = 0x1002,
@@ -18,34 +23,36 @@ enum Command {
     CS_MESSAGE_ACK = 0x1009,
     CS_MESSAGE_STATUS = 0x1012,
     CS_LOGOUT = 0x1013,
-    CS_USER_INFO = 0x1015
+    CS_USER_INFO = 0x1015,
 };
 
 enum Status {
     STATUS_OFFLINE = 0x00000000,
     STATUS_ONLINE = 0x00000001,
-    STATUS_AWAY = 0x00000002
+    STATUS_AWAY = 0x00000002,
 };
 
 enum MessageStatus {
     DELIVERED = 0x0000,
     USER_DOESNT_EXIST = 0x8001,
-    INTERNAL_SERVER_ERROR = 0x8003
+    INTERNAL_SERVER_ERROR = 0x8003,
 };
-}
+
+}; // namespace MRIM
 
 class MrimProtocol : public QObject
 {
     Q_OBJECT
 public:
     explicit MrimProtocol(MrimConnection* connection, QObject *parent = nullptr);
-
+    
+    // Auto-generated send methods
     void sendHello();
-    void sendLogin(const QString& username, const QString& password, quint32 status);
+    void sendLogin(const QString& username, const QString& password, const quint32& status);
     void sendMessage(const QString& to, const QString& message);
     void sendPing();
 
-    // methods down here are called by handlers
+    // Auto-generated callbacks (called by handlers)
     void onHelloAck(quint32 pingInterval);
     void onLoginAck();
     void onLoginRej(const QString& reason);
@@ -53,9 +60,11 @@ public:
     void onMessageStatus(quint32 status);
 
 signals:
+    // Auto-generated signals
+    void helloAckReceived(quint32 pingInterval);
     void loginSuccessful();
-    void loginRejected(const QString& reason);
-    void userInfoReceived(const QMap<QString, QVariant>& info);
+    void loginRejected(QString reason);
+    void userInfoReceived(QMap<QString, QVariant> info);
     void messageStatusReceived(MRIM::MessageStatus status);
 
 private slots:
@@ -65,7 +74,7 @@ private slots:
 private:
     void sendPacket(quint32 command, const QByteArray& data = QByteArray());
     void initHandlers();
-
+    
     MrimConnection* m_connection;
     MessageHandlerRegistry m_registry;
     QTimer* m_pingTimer;

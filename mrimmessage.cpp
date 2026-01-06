@@ -1,5 +1,7 @@
 #include "mrimmessage.h"
 #include <QTextCodec>
+#include <QStringEncoder>
+#include <QStringDecoder>
 #include <QDebug>
 #include <QIODevice>
 
@@ -17,7 +19,7 @@ MrimMessage* MrimMessage::field(const QString& key, FieldDataType dataType,
     field.dataType = dataType;
     field.constantValue = constantValue;
     field.maxSize = maxSize;
-
+    field.subbufferSize = subbufferSize;
     m_fields.append(field);
     return this;
 }
@@ -31,7 +33,6 @@ MrimMessage* MrimMessage::fieldWithCustomHandlers(
     field.key = key;
     field.customWriter = customWriter;
     field.customReader = customReader;
-
     m_fields.append(field);
     return this;
 }
@@ -39,6 +40,71 @@ MrimMessage* MrimMessage::fieldWithCustomHandlers(
 void MrimMessage::setByteOrder(QDataStream::ByteOrder order)
 {
     m_byteOrder = order;
+}
+
+// Function pointer approach - no more giant switches!
+MrimMessage::WriterFunc MrimMessage::getWriter(FieldDataType type)
+{
+    switch (type) {
+    case MRIM_FD_BYTE:
+        return [](QDataStream& s, const QVariant& v) { s << quint8(v.toUInt()); };
+    case MRIM_FD_UINT16:
+        return [](QDataStream& s, const QVariant& v) { s << quint16(v.toUInt()); };
+    case MRIM_FD_UINT32:
+        return [](QDataStream& s, const QVariant& v) { s << quint32(v.toUInt()); };
+    case MRIM_FD_UINT64:
+        return [](QDataStream& s, const QVariant& v) { s << quint64(v.toULongLong()); };
+    case MRIM_FD_INT16:
+        return [](QDataStream& s, const QVariant& v) { s << qint16(v.toInt()); };
+    case MRIM_FD_INT32:
+        return [](QDataStream& s, const QVariant& v) { s << qint32(v.toInt()); };
+    case MRIM_FD_SUBBUFFER:
+        return [](QDataStream& s, const QVariant& v) {
+            QByteArray data = v.toByteArray();
+            s.writeRawData(data.constData(), data.size());
+        };
+    case MRIM_FD_BYTE_ARRAY:
+        return [](QDataStream& s, const QVariant& v) {
+            QByteArray data = v.toByteArray();
+            s << quint32(data.size());
+            s.writeRawData(data.constData(), data.size());
+        };
+    default:
+        return [](QDataStream&, const QVariant&) {};
+    }
+}
+
+MrimMessage::ReaderFunc MrimMessage::getReader(FieldDataType type)
+{
+    switch (type) {
+    case MRIM_FD_BYTE:
+        return [](QDataStream& s, bool) { quint8 v; s >> v; return v; };
+    case MRIM_FD_UINT16:
+        return [](QDataStream& s, bool) { quint16 v; s >> v; return v; };
+    case MRIM_FD_UINT32:
+        return [](QDataStream& s, bool) { quint32 v; s >> v; return v; };
+    case MRIM_FD_UINT64:
+        return [](QDataStream& s, bool) { quint64 v; s >> v; return QVariant::fromValue(v); };
+    case MRIM_FD_INT16:
+        return [](QDataStream& s, bool) { qint16 v; s >> v; return v; };
+    case MRIM_FD_INT32:
+        return [](QDataStream& s, bool) { qint32 v; s >> v; return v; };
+    case MRIM_FD_SUBBUFFER:
+        return [this](QDataStream& s, bool) {
+            // Need subbuffer size from field
+            return QVariant();
+        };
+    case MRIM_FD_BYTE_ARRAY:
+        return [](QDataStream& s, bool) {
+            quint32 len;
+            s >> len;
+            QByteArray buf(len, 0);
+            s.readRawData(buf.data(), len);
+            return buf;
+        };
+    default:
+        return [](QDataStream&, bool) { return QVariant(); };
+    }
 }
 
 QByteArray MrimMessage::write(const QMap<QString, QVariant>& message, bool utf16required)
@@ -56,74 +122,21 @@ QByteArray MrimMessage::write(const QMap<QString, QVariant>& message, bool utf16
 
         QVariant value = field.constantValue.isValid() ? field.constantValue : message.value(field.key);
 
-        switch (field.dataType) {
-            case MRIM_FD_BYTE: {
-                quint8 val = value.toUInt();
-                stream << val;
-                break;
-            }
-
-            case MRIM_FD_UINT16: {
-                quint16 val = value.toUInt();
-                stream << val;
-                break;
-            }
-
-            case MRIM_FD_UINT32: {
-                quint32 val = value.toUInt();
-                stream << val;
-                break;
-            }
-
-            case MRIM_FD_UINT64: {
-                quint64 val = value.toULongLong();
-                stream << val;
-                break;
-            }
-
-            case MRIM_FD_INT16: {
-                qint16 val = value.toInt();
-                stream << val;
-                break;
-            }
-
-            case MRIM_FD_INT32: {
-                qint32 val = value.toInt();
-                stream << val;
-                break;
-            }
-
-            case MRIM_FD_SUBBUFFER: {
-                QByteArray data = value.toByteArray();
-                stream.writeRawData(data.constData(), data.size());
-                break;
-            }
-
-            case MRIM_FD_BYTE_ARRAY: {
-                QByteArray data = value.toByteArray();
-                quint32 len = data.size();
-                stream << len;
-                stream.writeRawData(data.constData(), len);
-                break;
-            }
-
-            case MRIM_FD_UBIART_LIKE_STRING: {
-                QString str = value.toString();
-                QByteArray encoded = convertToCP1251(str);
-                quint32 len = encoded.size();
-                stream << len;
-                stream.writeRawData(encoded.constData(), len);
-                break;
-            }
-
-            case MRIM_FD_UNICODE_STRING: {
-                QString str = value.toString();
-                QByteArray encoded = utf16required ? convertToUTF16LE(str) : convertToCP1251(str);
-                quint32 len = encoded.size();
-                stream << len;
-                stream.writeRawData(encoded.constData(), len);
-                break;
-            }
+        // Special handling for strings
+        if (field.dataType == MRIM_FD_UBIART_LIKE_STRING) {
+            QString str = value.toString();
+            QByteArray encoded = convertToCP1251(str);
+            stream << quint32(encoded.size());
+            stream.writeRawData(encoded.constData(), encoded.size());
+        } else if (field.dataType == MRIM_FD_UNICODE_STRING) {
+            QString str = value.toString();
+            QByteArray encoded = utf16required ? convertToUTF16LE(str) : convertToCP1251(str);
+            stream << quint32(encoded.size());
+            stream.writeRawData(encoded.constData(), encoded.size());
+        } else {
+            // Use function pointer
+            auto writer = getWriter(field.dataType);
+            writer(stream, value);
         }
     }
 
@@ -152,128 +165,41 @@ QMap<QString, QVariant> MrimMessage::read(const QByteArray& data, bool utf16requ
             continue;
         }
 
-        switch (field.dataType) {
-            case MRIM_FD_BYTE: {
-                quint8 val;
-                stream >> val;
-                result[field.key] = val;
-
-                if (field.constantValue.isValid()) {
-                    Q_ASSERT(val == field.constantValue.toUInt());
-                }
-                break;
-            }
-
-            case MRIM_FD_UINT16: {
-                quint16 val;
-                stream >> val;
-                result[field.key] = val;
-
-                if (field.constantValue.isValid()) {
-                    Q_ASSERT(val == field.constantValue.toUInt());
-                }
-                break;
-            }
-
-            case MRIM_FD_UINT32: {
-                quint32 val;
-                stream >> val;
-                result[field.key] = val;
-
-                if (field.constantValue.isValid()) {
-                    Q_ASSERT(val == field.constantValue.toUInt());
-                }
-                break;
-            }
-
-            case MRIM_FD_UINT64: {
-                quint64 val;
-                stream >> val;
-                result[field.key] = QVariant::fromValue(val);
-
-                if (field.constantValue.isValid()) {
-                    Q_ASSERT(val == field.constantValue.toULongLong());
-                }
-                break;
-            }
-
-            case MRIM_FD_INT16: {
-                qint16 val;
-                stream >> val;
-                result[field.key] = val;
-
-                if (field.constantValue.isValid()) {
-                    Q_ASSERT(val == field.constantValue.toInt());
-                }
-                break;
-            }
-
-            case MRIM_FD_INT32: {
-                qint32 val;
-                stream >> val;
-                result[field.key] = val;
-
-                if (field.constantValue.isValid()) {
-                    Q_ASSERT(val == field.constantValue.toInt());
-                }
-                break;
-            }
-
-            case MRIM_FD_SUBBUFFER: {
-                QByteArray buffer(field.subbufferSize, 0);
-                stream.readRawData(buffer.data(), field.subbufferSize);
-                result[field.key] = buffer;
-                break;
-            }
-
-            case MRIM_FD_BYTE_ARRAY: {
-                quint32 length;
-                stream >> length;
+        // Special handling for strings
+        if (field.dataType == MRIM_FD_UBIART_LIKE_STRING) {
+            quint32 length;
+            stream >> length;
+            QByteArray buffer(length, 0);
+            stream.readRawData(buffer.data(), length);
+            result[field.key] = convertFromCP1251(buffer);
+        } else if (field.dataType == MRIM_FD_UNICODE_STRING) {
+            quint32 length;
+            stream >> length;
+            if (length > 0) {
+                bool useUtf16 = utf16required && (length % 2 == 0);
                 QByteArray buffer(length, 0);
                 stream.readRawData(buffer.data(), length);
-                result[field.key] = buffer;
-                break;
-            }
-
-            case MRIM_FD_UBIART_LIKE_STRING: {
-                quint32 length;
-                stream >> length;
-                QByteArray buffer(length, 0);
-                stream.readRawData(buffer.data(), length);
-                QString str = convertFromCP1251(buffer);
+                QString str = useUtf16 ? convertFromUTF16LE(buffer) : convertFromCP1251(buffer);
+                if (str.length() > field.maxSize) {
+                    str = str.left(field.maxSize);
+                }
                 result[field.key] = str;
-                break;
+            } else {
+                result[field.key] = QString("");
             }
+        } else if (field.dataType == MRIM_FD_SUBBUFFER) {
+            QByteArray buffer(field.subbufferSize, 0);
+            stream.readRawData(buffer.data(), field.subbufferSize);
+            result[field.key] = buffer;
+        } else {
+            // Use function pointer
+            auto reader = getReader(field.dataType);
+            QVariant val = reader(stream, utf16required);
+            result[field.key] = val;
 
-            case MRIM_FD_UNICODE_STRING: {
-                quint32 length;
-                stream >> length;
-
-                if (length > 0) {
-                    bool useUtf16 = utf16required;
-
-                    // falling back if odd
-                    if (length % 2 != 0) {
-                        useUtf16 = false;
-                    }
-
-                    QByteArray buffer(length, 0);
-                    stream.readRawData(buffer.data(), length);
-
-                    QString str = useUtf16
-                                      ? convertFromUTF16LE(buffer)
-                                      : convertFromCP1251(buffer);
-
-                    // trimmin
-                    if (str.length() > field.maxSize) {
-                        str = str.left(field.maxSize);
-                    }
-
-                    result[field.key] = str;
-                } else {
-                    result[field.key] = QString("");
-                }
-                break;
+            // Validate constant values
+            if (field.constantValue.isValid()) {
+                Q_ASSERT(val == field.constantValue);
             }
         }
     }
@@ -296,22 +222,17 @@ QString MrimMessage::convertFromCP1251(const QByteArray& data)
     if (codec) {
         return codec->toUnicode(data);
     }
-    qDebug() << "making qstring from latin" << data;
     return QString::fromLatin1(data);
 }
 
 QByteArray MrimMessage::convertToUTF16LE(const QString& str)
 {
     auto toUtf16 = QStringEncoder(QStringEncoder::Utf16);
-    QByteArray encodedString = toUtf16(str);
-
-    return encodedString;
+    return toUtf16(str);
 }
 
 QString MrimMessage::convertFromUTF16LE(const QByteArray& data)
 {
     auto fromUtf16 = QStringDecoder(QStringDecoder::Utf16);
-    QString decodedString = fromUtf16(data);
-
-    return decodedString;
+    return fromUtf16(data);
 }
