@@ -61,6 +61,14 @@ private:
     std::unique_ptr<MrimMessage> m_constructor;
 };
 
+class MessageAckHandler : public MessageHandler {
+public:
+    MessageAckHandler();
+    void handle(const QByteArray& data, MrimProtocol* protocol) override;
+private:
+    std::unique_ptr<MrimMessage> m_constructor;
+};
+
 // Handler registry
 class MessageHandlerRegistry {
 public:

@@ -25,9 +25,13 @@ signals:
     void loginRejected(const QString& reason);
     void userInfoReceived(const QMap<QString, QVariant>& info);
     void messageStatusReceived(MRIM::MessageStatus status);
+    void messageReceived(const QString& from, const QString& text);
+    void offlineMessageReceived(const QString& from, const QString& text);
 
 private slots:
     void onConnected();
+    void handleIncomingMessage(quint32 messageId, quint32 flags,
+                               QString from, QString message, QString rtfMessage);
 
 private:
     MrimConnection* m_connection;

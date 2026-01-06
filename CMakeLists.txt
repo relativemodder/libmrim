@@ -27,7 +27,6 @@ if (Python3_FOUND)
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Generating MRIM protocol code from protocol.xml"
   )
-
   add_custom_target(mrimcodegen
     DEPENDS
       ${CMAKE_CURRENT_SOURCE_DIR}/include/mrim/mrimprotocol.h

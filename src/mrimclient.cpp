@@ -13,6 +13,7 @@ MrimClient::MrimClient(QObject *parent)
     connect(m_protocol, &MrimProtocol::loginRejected, this, &MrimClient::loginRejected);
     connect(m_protocol, &MrimProtocol::userInfoReceived, this, &MrimClient::userInfoReceived);
     connect(m_protocol, &MrimProtocol::messageStatusReceived, this, &MrimClient::messageStatusReceived);
+    connect(m_protocol, &MrimProtocol::messageReceived, this, &MrimClient::handleIncomingMessage);
 }
 
 void MrimClient::connectToServer(const QString &host, quint16 port)
@@ -46,4 +47,22 @@ void MrimClient::onConnected()
 {
     emit connected();
     m_protocol->sendHello();
+}
+
+void MrimClient::handleIncomingMessage(quint32 messageId, quint32 flags,
+                                       QString from, QString message,
+                                       QString rtfMessage) {
+    m_protocol->sendMessageReceipt(messageId, from); // yeah, we received it
+
+    // is it offline?
+    if (flags & 0x00000001) {
+        emit offlineMessageReceived(from, message);
+    } else {
+        emit messageReceived(from, message);
+    }
+
+    // WIP
+    // 0x00000008 - auth request
+    // 0x00000200 - forwarded contacts
+    // 0x00000400 - "typing"
 }

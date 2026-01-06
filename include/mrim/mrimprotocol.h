@@ -24,6 +24,7 @@ enum Command {
     CS_MESSAGE_STATUS = 0x1012,
     CS_LOGOUT = 0x1013,
     CS_USER_INFO = 0x1015,
+    CS_MESSAGE_RECV = 0x1011,
 };
 
 enum Status {
@@ -51,6 +52,7 @@ public:
     void sendLogin(const QString& username, const QString& password, const quint32& status);
     void sendMessage(const QString& to, const QString& message);
     void sendPing();
+    void sendMessageReceipt(const quint32& messageId, const QString& from);
 
     // Auto-generated callbacks (called by handlers)
     void onHelloAck(quint32 pingInterval);
@@ -58,6 +60,7 @@ public:
     void onLoginRej(const QString& reason);
     void onUserInfo(const QMap<QString, QVariant>& info);
     void onMessageStatus(quint32 status);
+    void onMessageReceived(quint32 messageId, quint32 flags, const QString& from, const QString& message, const QString& rtfMessage);
 
 signals:
     // Auto-generated signals
@@ -66,6 +69,7 @@ signals:
     void loginRejected(QString reason);
     void userInfoReceived(QMap<QString, QVariant> info);
     void messageStatusReceived(MRIM::MessageStatus status);
+    void messageReceived(quint32 messageId, quint32 flags, QString from, QString message, QString rtfMessage);
 
 private slots:
     void onPacketReceived(const MrimPacketHeader& header, const QByteArray& data);

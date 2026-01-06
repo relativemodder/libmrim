@@ -69,6 +69,22 @@ void MessageStatusHandler::handle(const QByteArray& data, MrimProtocol* protocol
     protocol->onMessageStatus(parsed["status"].toUInt());
 }
 
+// CS_MESSAGE_ACK
+MessageAckHandler::MessageAckHandler() {
+    m_constructor = std::make_unique<MrimMessage>();
+    m_constructor->field("messageId", MRIM_FD_UINT32)
+                  ->field("flags", MRIM_FD_UINT32)
+                  ->field("from", MRIM_FD_UBIART_LIKE_STRING)
+                  ->field("message", MRIM_FD_UBIART_LIKE_STRING)
+                  ->field("rtfMessage", MRIM_FD_UBIART_LIKE_STRING)
+                  ;
+}
+
+void MessageAckHandler::handle(const QByteArray& data, MrimProtocol* protocol) {
+    QMap<QString, QVariant> parsed = m_constructor->read(data);
+    protocol->onMessageReceived(parsed["messageId"].toUInt(), parsed["flags"].toUInt(), parsed["from"].toString(), parsed["message"].toString(), parsed["rtfMessage"].toString());
+}
+
 // Registry implementation
 void MessageHandlerRegistry::registerHandler(quint32 command, std::unique_ptr<MessageHandler> handler)
 {

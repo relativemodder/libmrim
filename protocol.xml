@@ -13,6 +13,7 @@
         <command name="CS_MESSAGE_STATUS" value="0x1012" direction="server_to_client"/>
         <command name="CS_LOGOUT" value="0x1013" direction="server_to_client"/>
         <command name="CS_USER_INFO" value="0x1015" direction="server_to_client"/>
+        <command name="CS_MESSAGE_RECV" value="0x1011" direction="client_to_server"/>
     </commands>
 
     <!-- Enums -->
@@ -69,6 +70,21 @@
                 <param name="status" type="MRIM::MessageStatus"/>
             </signal>
         </handler>
+
+        <handler command="CS_MESSAGE_ACK" callback="onMessageReceived">
+            <field name="messageId" type="UINT32"/>
+            <field name="flags" type="UINT32"/>
+            <field name="from" type="UBIART_LIKE_STRING"/>
+            <field name="message" type="UBIART_LIKE_STRING"/>
+            <field name="rtfMessage" type="UBIART_LIKE_STRING"/>
+            <signal name="messageReceived">
+                <param name="messageId" type="quint32"/>
+                <param name="flags" type="quint32"/>
+                <param name="from" type="QString"/>
+                <param name="message" type="QString"/>
+                <param name="rtfMessage" type="QString"/>
+            </signal>
+        </handler>
     </handlers>
 
     <!-- Client send methods for outgoing packets -->
@@ -95,5 +111,12 @@
         </method>
 
         <method name="sendPing" command="CS_PING"/>
+
+        <method name="sendMessageReceipt" command="CS_MESSAGE_RECV">
+            <param name="messageId" type="quint32"/>
+            <param name="from" type="QString"/>
+            <field name="messageId" type="UINT32" source="messageId"/>
+            <field name="from" type="UBIART_LIKE_STRING" source="from"/>
+        </method>
     </client_methods>
 </protocol>

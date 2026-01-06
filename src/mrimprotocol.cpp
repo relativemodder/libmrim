@@ -25,6 +25,7 @@ void MrimProtocol::initHandlers()
     m_registry.registerHandler(MRIM::CS_LOGIN_REJ, std::make_unique<LoginRejHandler>());
     m_registry.registerHandler(MRIM::CS_USER_INFO, std::make_unique<UserInfoHandler>());
     m_registry.registerHandler(MRIM::CS_MESSAGE_STATUS, std::make_unique<MessageStatusHandler>());
+    m_registry.registerHandler(MRIM::CS_MESSAGE_ACK, std::make_unique<MessageAckHandler>());
 }
 
 // Auto-generated send methods
@@ -75,6 +76,20 @@ void MrimProtocol::sendPing()
     sendPacket(MRIM::CS_PING);
 }
 
+void MrimProtocol::sendMessageReceipt(const quint32 &messageId, const QString &from)
+{
+    MrimMessage constructor;
+    constructor.field("messageId", MRIM_FD_UINT32)
+               ->field("from", MRIM_FD_UBIART_LIKE_STRING)
+               ;
+
+    QMap<QString, QVariant> data;
+    data["messageId"] = messageId;
+    data["from"] = from;
+
+    sendPacket(MRIM::CS_MESSAGE_RECV, constructor.write(data));
+}
+
 // Auto-generated callbacks
 
 void MrimProtocol::onHelloAck(quint32 pingInterval)
@@ -102,6 +117,11 @@ void MrimProtocol::onUserInfo(const QMap<QString, QVariant> &info)
 void MrimProtocol::onMessageStatus(quint32 status)
 {
     emit messageStatusReceived(MRIM::MessageStatus(status));
+}
+
+void MrimProtocol::onMessageReceived(quint32 messageId, quint32 flags, const QString &from, const QString &message, const QString &rtfMessage)
+{
+    emit messageReceived(messageId, flags, from, message, rtfMessage);
 }
 
 // Infrastructure methods
