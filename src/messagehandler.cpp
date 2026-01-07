@@ -75,13 +75,13 @@ MessageAckHandler::MessageAckHandler() {
     m_constructor->field("messageId", MRIM_FD_UINT32)
                   ->field("flags", MRIM_FD_UINT32)
                   ->field("from", MRIM_FD_UBIART_LIKE_STRING)
-                  ->field("message", MRIM_FD_UBIART_LIKE_STRING)
-                  ->field("rtfMessage", MRIM_FD_UBIART_LIKE_STRING)
+                  ->field("message", MRIM_FD_UNICODE_STRING)
+                  ->field("rtfMessage", MRIM_FD_UNICODE_STRING)
                   ;
 }
 
 void MessageAckHandler::handle(const QByteArray& data, MrimProtocol* protocol) {
-    QMap<QString, QVariant> parsed = m_constructor->read(data);
+    QMap<QString, QVariant> parsed = m_constructor->read(data, true);
     protocol->onMessageReceived(parsed["messageId"].toUInt(), parsed["flags"].toUInt(), parsed["from"].toString(), parsed["message"].toString(), parsed["rtfMessage"].toString());
 }
 

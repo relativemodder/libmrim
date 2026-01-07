@@ -9,7 +9,7 @@ class Redirector : public QObject
 {
     Q_OBJECT
 public:
-    explicit Redirector(QString redirectorServerAddress, QObject *parent = nullptr);
+    explicit Redirector(QString redirectorServerAddress, quint32 port, QObject *parent = nullptr);
 
 public slots:
     void checkAvailableServer();
@@ -22,6 +22,7 @@ signals:
 
 private:
     QString m_redirectorServerAddress;
+    quint32 m_redirectorServerPort;
     QTcpSocket *socket;
 };
 

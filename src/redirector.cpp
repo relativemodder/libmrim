@@ -2,9 +2,10 @@
 #include <QTcpSocket>
 #include <QDebug>
 
-Redirector::Redirector(QString redirectorServerAddress, QObject *parent)
+Redirector::Redirector(QString redirectorServerAddress, quint32 port, QObject *parent)
     : QObject{parent},
-    m_redirectorServerAddress(redirectorServerAddress)
+    m_redirectorServerAddress(redirectorServerAddress),
+    m_redirectorServerPort(port)
 {
     socket = new QTcpSocket(this);
 }
@@ -26,15 +27,6 @@ void Redirector::checkAvailableServer()
         emit this->serverAvailable(address);
     });
 
-    auto addrSplit = m_redirectorServerAddress.split(":");
-
-    QHostAddress address(addrSplit.first());
-
-    if (addrSplit.count() < 2) {
-        emit error("You need to specify a port!");
-        return;
-    }
-
-    auto port = addrSplit.last().toUInt();
-    socket->connectToHost(address, port);
+    qDebug() << "Redirector: Connecting to address" << m_redirectorServerAddress << "port" << m_redirectorServerPort;
+    socket->connectToHost(m_redirectorServerAddress, m_redirectorServerPort);
 }

@@ -75,8 +75,8 @@
             <field name="messageId" type="UINT32"/>
             <field name="flags" type="UINT32"/>
             <field name="from" type="UBIART_LIKE_STRING"/>
-            <field name="message" type="UBIART_LIKE_STRING"/>
-            <field name="rtfMessage" type="UBIART_LIKE_STRING"/>
+            <field name="message" type="UNICODE_STRING" utf16="true" />
+            <field name="rtfMessage" type="UNICODE_STRING" utf16="true" />
             <signal name="messageReceived">
                 <param name="messageId" type="quint32"/>
                 <param name="flags" type="quint32"/>
